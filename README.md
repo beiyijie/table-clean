@@ -40,6 +40,107 @@
 
 ---
 
+## 🤖 AI 使用指南
+
+当 AI 助手调用此 Skills 时，按以下流程工作：
+
+### 第一步：询问用户需求
+
+AI 应向用户确认以下问题（可根据数据自动推断部分答案）：
+
+```
+1. 是否需要去重？（默认：是）
+2. 缺失值怎么处理？
+   - 数值列：均值 / 中位数 / 前向填充 / 后向填充 / 删除行
+   - 文本列：众数（最常见值）/ 前向填充 / 后向填充 / 删除行
+3. 是否需要检测异常值？用什么方法？（IQR / Z-Score）
+4. 异常值阈值？（默认 1.5，越大越宽松）
+5. 是否需要范围校验？各列的合法范围是什么？
+6. 日期列需要统一成什么格式？（默认 %Y-%m-%d）
+7. 是否需要校验邮箱格式？
+8. 是否需要统一分类值？（如"北京市"→"北京"）
+9. 是否生成清洗报告？
+```
+
+### 第二步：构建配置对象
+
+根据用户回答，构造 `config` 字典：
+
+```python
+from table_cleaner import TableCleaner
+
+config = {
+    "remove_duplicates": True,              # 用户确认去重
+    "missing_strategy": {
+        "numeric": "mean",                  # 数值列用均值填充
+        "text": "mode"                      # 文本列用众数填充
+    },
+    "outlier_method": "iqr",                # IQR 方法
+    "outlier_threshold": 1.5,               # 默认阈值
+    "range_rules": {                        # 根据业务自定义
+        "age": (0, 150),
+        "salary": (0, None),
+        "score": (0, 100),
+    },
+    "date_format": "%Y-%m-%d",
+    "validate_email": True,
+    "remove_city_suffix": True,
+    "category_mapping": {                   # 用户自定义映射
+        "department": {"技术部": "研发部"}
+    },
+}
+
+cleaner = TableCleaner(df, config=config)
+cleaner.auto_clean()
+cleaned_df = cleaner.get_df()
+```
+
+### 第三步：执行并反馈
+
+```python
+# 打印清洗操作记录供 AI 向用户汇报
+for log in cleaner.cleaning_log:
+    print(f"[{log['action']}] {log['details']}")
+
+# 生成报告
+from report_generator import ReportGenerator
+ReportGenerator.generate_report(original_df, cleaned_df, cleaner.cleaning_log, "report.txt")
+```
+
+### AI 自动推断示例
+
+AI 可先分析数据特征，自动推荐配置：
+
+```python
+# AI 分析数据
+numeric_cols = df.select_dtypes(include=['number']).columns
+text_cols = df.select_dtypes(include=['object']).columns
+date_cols = [c for c in df.columns if 'date' in c.lower() or '日期' in c]
+email_cols = [c for c in df.columns if 'email' in c.lower() or '邮箱' in c]
+
+# 自动推荐配置
+config = {
+    "missing_strategy": {"numeric": "mean", "text": "mode"},
+    "range_rules": {},
+    "date_format": "%Y-%m-%d",
+}
+
+# 自动检测并添加范围规则
+for col in numeric_cols:
+    col_lower = col.lower()
+    if 'age' in col_lower or '年龄' in col_lower:
+        config["range_rules"][col_lower] = (0, 150)
+    elif 'salary' in col_lower or '薪资' in col_lower or '工资' in col_lower:
+        config["range_rules"][col_lower] = (0, None)
+    elif 'score' in col_lower or '分数' in col_lower:
+        config["range_rules"][col_lower] = (0, 100)
+
+cleaner = TableCleaner(df, config=config)
+cleaner.auto_clean()
+```
+
+---
+
 ## 🧩 作为 Skills 使用
 
 本项目设计为一个独立的 **Skills（技能模块）**，可通过以下两种方式集成：
