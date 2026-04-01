@@ -1,5 +1,7 @@
 # 表格清洗机 TableCleaner
 
+> 🛠️ **这是一个 Skills（技能模块）** — 可直接集成到你的项目中，作为可复用的数据清洗组件。
+>
 > 自动化表格数据清洗工具 — 强制规则保障基础质量，可配置选项满足个性化需求。
 
 ---
@@ -35,6 +37,55 @@
 - **表格合并** — 按行拼接 / 按列关联合并
 - **表格拆分** — 按列值拆分 / 按行数拆分
 - **清洗报告** — 生成 TXT / CSV 格式的详细报告
+
+---
+
+## 🧩 作为 Skills 使用
+
+本项目设计为一个独立的 **Skills（技能模块）**，可通过以下两种方式集成：
+
+### 方式 A：直接复制使用
+
+将以下核心文件复制到你的项目中即可使用：
+
+```
+your-project/
+├── table_cleaner.py         # 核心清洗模块
+├── table_merger_splitter.py # 合并拆分模块
+├── report_generator.py      # 报告生成模块
+└── requirements.txt         # 依赖声明
+```
+
+```python
+# 在你的项目中直接导入
+from table_cleaner import TableCleaner
+from report_generator import ReportGenerator
+
+cleaner = TableCleaner(df)
+cleaner.auto_clean()
+```
+
+### 方式 B：作为子模块引入
+
+```bash
+git submodule add https://github.com/beiyijie/table-clean.git libs/table-clean
+```
+
+```python
+import sys
+sys.path.insert(0, "libs/table-clean")
+from table_cleaner import TableCleaner
+```
+
+### Skills 能力清单
+
+| 能力 | 说明 |
+|------|------|
+| 🧹 强制清洗 | 7 条基础清洗规则，自动执行 |
+| ⚙️ 可配置清洗 | 7 条可选规则，支持自定义参数 |
+| 🔗 表格合并 | 多文件按行拼接 / 按列关联 |
+| ✂️ 表格拆分 | 按列值分组 / 按行数分片 |
+| 📊 报告导出 | 生成清洗前后对比报告 |
 
 ---
 
